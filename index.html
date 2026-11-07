@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AVS Engineering College — Discipline Monitoring System</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Phosphor Icons (Modern Icon Library) -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <!-- Firebase SDKs (v9 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- Exporting Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+
+  <!-- Letterhead Header -->
+  <header class="letterhead">
+    <div class="letterhead-inner">
+      <!-- <div class="crest">AVS</div> -->
+      <div class="letterhead-text">
+        <h1>AVS Engineering College <span style="color: red;">(Autonomous)</span></h1>
+        <p class="subtitle">Discipline Monitoring System</p>
+      </div>
+      <div id="user-info" class="hidden">
+        <span id="user-role-badge"></span>
+        <button id="logout-btn" class="btn btn-ghost" type="button" aria-label="Sign Out">
+          <i class="ph ph-sign-out"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- LOGIN VIEW -->
+    <section id="login-view" class="card animate-slide-up">
+      <div class="card-body">
+        <div class="login-crest">
+          <img src="./unnamed.jpg" alt="AVS Engineering College Logo">
+        </div>
+        <h2 class="login-title">Discipline Portal</h2>
+        <p class="login-subtitle">Discipline Register Access</p>
+        <form id="login-form">
+
+          <div class="form-group stagger-1 animate-slide-up">
+            <label for="login-email">Registered Email</label>
+            <input type="email" id="login-email" required placeholder="name@avsec.edu.in" autocomplete="email">
+          </div>
+
+          <div class="form-group stagger-2 animate-slide-up">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+          </div>
+
+          <div class="form-group stagger-3 animate-slide-up">
+            <label for="login-role">Select Role</label>
+            <select id="login-role" required>
+              <option value="faculty">Faculty</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <button type="submit" id="login-btn" class="btn btn-primary full-width animate-slide-up stagger-4">Sign
+            In</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- FACULTY VIEW -->
+    <section id="faculty-view" class="hidden">
+
+      <!-- Modern Bottom Nav for Faculty -->
+      <nav class="bottom-nav animate-slide-up">
+        <button class="nav-item active" data-tab="booking-tab" type="button">
+          <i class="ph ph-plus-circle"></i>
+          <span>Incident</span>
+        </button>
+        <button class="nav-item" data-tab="faculty-reports-tab" type="button">
+          <i class="ph ph-chart-line-up"></i>
+          <span>Reports</span>
+        </button>
+      </nav>
+
+      <!-- Tab 1: New Incident Booking -->
+      <div id="booking-tab" class="tab-content active">
+        <div class="card animate-slide-up stagger-1">
+          <div class="card-header">
+            <h2>Register Discipline Case</h2>
+            <span class="card-eyebrow">New Entry</span>
+          </div>
+          <div class="card-body">
+            <form id="discipline-form">
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="incident-date">Incident Date</label>
+                  <input type="date" id="incident-date" required>
+                </div>
+                <div class="form-group">
+                  <label for="incident-time">Incident Time</label>
+                  <input type="time" id="incident-time" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="select-dept">Department</label>
+                <select id="select-dept" required>
+                  <option value="">Select Department</option>
+                  <option value="AI&DS">AI&amp;DS</option>
+                  <option value="BME">BME</option>
+                  <option value="CIVIL">CIVIL</option>
+                  <option value="CSE">CSE</option>
+                  <option value="CSE(AI&ML)">CSE(AI&amp;ML)</option>
+                  <option value="ECE">ECE</option>
+                  <option value="EEE">EEE</option>
+                  <option value="IT">IT</option>
+                  <option value="MECH">MECH</option>
+                  <option value="MBA">MBA</option>
+                  <option value="MCA">MCA</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="faculty-name-select">Reporting Faculty <span class="hint">(any dept)</span></label>
+                  <select id="faculty-name-select" required disabled>
+                    <option value="">Loading faculty...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="select-year">Student Year</label>
+                  <select id="select-year" required disabled>
+                    <option value="">Select department first</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group relative">
+                <label for="student-search">Search Student — Name / Reg No</label>
+                <input type="text" id="student-search" placeholder="Select department &amp; year first..."
+                  autocomplete="off" required disabled>
+                <ul id="autocomplete-list" class="autocomplete-items hidden"></ul>
+              </div>
+
+              <div class="snapshot-ticket animate-pop">
+                <div class="ticket-label">Student Snapshot</div>
+                <div class="ticket-stats">
+                  <div class="ticket-stat">
+                    <div class="stat-k">Reg No</div>
+                    <div class="stat-v mono" id="disp-reg-no">—</div>
+                  </div>
+                  <div class="ticket-stat">
+                    <div class="stat-k">Year / Sec</div>
+                    <div class="stat-v" id="disp-year-sec">—</div>
+                  </div>
+                  <div class="ticket-stat flag" id="disp-prior-count-box">
+                    <div class="stat-k">Prior Incidents</div>
+                    <div class="stat-v" id="disp-prior-count">—</div>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" id="selected-student-id">
+
+              <div class="form-group">
+                <label for="block-name-select">Block / Location <span class="hint">(by dept)</span></label>
+                <select id="block-name-select" required disabled>
+                  <option value="">Select department first</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="discipline-type">Discipline Issue <span class="hint">(by dept)</span></label>
+                <select id="discipline-type" required disabled>
+                  <option value="">Select department first</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="other-comments">Other Comments <span class="hint">(optional)</span></label>
+                <textarea id="other-comments" rows="3" placeholder="Enter any additional details..."></textarea>
+              </div>
+
+              <button type="submit" id="submit-incident-btn" class="btn btn-primary full-width">Submit Incident</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Faculty Reports -->
+      <div id="faculty-reports-tab" class="tab-content">
+        <div class="card animate-slide-up">
+          <div class="card-header">
+            <h2>Faculty Reports</h2>
+            <span class="card-eyebrow">My Records</span>
+          </div>
+          <div class="card-body">
+
+            <div class="segmented" id="report-mode-toggle">
+              <button type="button" class="active" data-mode="day">Single Day</button>
+              <button type="button" data-mode="range">Date Range</button>
+              <button type="button" data-mode="overall">Overall</button>
+            </div>
+
+            <div id="report-mode-day" class="report-mode-panel">
+              <div class="form-group">
+                <label for="report-date">Filter Date</label>
+                <input type="date" id="report-date">
+              </div>
+            </div>
+
+            <div id="report-mode-range" class="report-mode-panel hidden">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="report-start-date">From</label>
+                  <input type="date" id="report-start-date">
+                </div>
+                <div class="form-group">
+                  <label for="report-end-date">To</label>
+                  <input type="date" id="report-end-date">
+                </div>
+              </div>
+            </div>
+
+            <div id="report-mode-overall" class="report-mode-panel hidden">
+              <p class="empty-note" style="padding:8px 0;">Shows every incident you have logged, all-time.</p>
+            </div>
+
+            <button id="fetch-faculty-report" class="btn btn-primary full-width" type="button">Get Report</button>
+
+            <div id="report-export-area" class="export-container hidden">
+              <div id="report-printable" style="padding: 10px; margin-top: 15px;">
+                <div class="letterhead-print">
+                  <div class="lp-college">AVS Engineering College (Autonomous)</div>
+                  <div class="lp-sub">Discipline Monitoring System — Faculty Report</div>
+                </div>
+                <h3>Incident Log (<span id="selected-date-lbl"></span>)</h3>
+                <div class="table-wrapper">
+                  <table id="faculty-report-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Student</th>
+                        <th>Reg No</th>
+                        <th>Dept</th>
+                        <th>Year</th>
+                        <th>Section</th>
+                        <th>Violation</th>
+                        <th>Block</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="export-actions">
+                <button id="export-pdf" class="btn btn-danger" type="button">PDF</button>
+                <button id="export-excel" class="btn btn-success" type="button">Excel</button>
+                <button id="export-image" class="btn btn-info" type="button">Image</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN VIEW -->
+    <section id="admin-view" class="hidden">
+
+      <!-- Modern Bottom Nav for Admin -->
+      <nav class="bottom-nav animate-slide-up">
+        <button class="nav-item active" data-tab="admin-dashboard-tab" type="button">
+          <i class="ph ph-squares-four"></i>
+          <span>Overview</span>
+        </button>
+        <button class="nav-item" data-tab="admin-students-tab" type="button">
+          <i class="ph ph-users"></i>
+          <span>Students</span>
+        </button>
+        <button class="nav-item" data-tab="admin-faculty-tab" type="button">
+          <i class="ph ph-chalkboard-teacher"></i>
+          <span>Faculty</span>
+        </button>
+      </nav>
+
+      <!-- Admin Tab 1: Analytics & Filters -->
+      <div id="admin-dashboard-tab" class="tab-content active">
+        <div class="card animate-slide-up stagger-1">
+          <div class="card-header">
+            <h2>Admin Overview &amp; Analytics</h2>
+            <span class="card-eyebrow">Institution Wide</span>
+          </div>
+          <div class="card-body">
+
+            <div class="metrics-grid">
+              <div class="metric-card stagger-1">
+                <span class="metric-num" id="total-bookings-count">0</span>
+                <span class="metric-label">Total Incidents</span>
+              </div>
+              <div class="metric-card stagger-2">
+                <span class="metric-num" id="today-bookings-count">0</span>
+                <span class="metric-label">Today's Cases</span>
+              </div>
+              <div class="metric-card stagger-3">
+                <span class="metric-num" id="week-bookings-count">0</span>
+                <span class="metric-label">Last 7 Days</span>
+              </div>
+              <div class="metric-card stagger-4">
+                <span class="metric-num" id="active-faculty-count">0</span>
+                <span class="metric-label">Reporting Faculty</span>
+              </div>
+            </div>
+
+            <!-- Faculty-wise summary -->
+            <div class="card-inner">
+              <div class="ticket-label" style="margin-bottom:10px;">Faculty-wise Booking Count</div>
+              <div id="faculty-summary-list" class="faculty-summary-list">
+                <p class="empty-note">No data yet.</p>
+              </div>
+            </div>
+
+            <!-- Admin Filters -->
+            <div class="filter-section card-inner">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="admin-dept-filter">Department</label>
+                  <select id="admin-dept-filter">
+                    <option value="ALL">All Departments</option>
+                    <option value="AI&DS">AI&amp;DS</option>
+                    <option value="BME">BME</option>
+                    <option value="CIVIL">CIVIL</option>
+                    <option value="CSE">CSE</option>
+                    <option value="CSE(AI&ML)">CSE(AI&amp;ML)</option>
+                    <option value="ECE">ECE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="IT">IT</option>
+                    <option value="MECH">MECH</option>
+                    <option value="MBA">MBA</option>
+                    <option value="MCA">MCA</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="admin-faculty-filter">Faculty</label>
+                  <select id="admin-faculty-filter">
+                    <option value="ALL">All Faculty</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="admin-issue-filter">Issue / Violation Type</label>
+                <select id="admin-issue-filter">
+                  <option value="ALL">All Discipline Issues</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="admin-start-date">From</label>
+                  <input type="date" id="admin-start-date">
+                </div>
+                <div class="form-group">
+                  <label for="admin-end-date">To</label>
+                  <input type="date" id="admin-end-date">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="admin-student-filter">Individual Student Search</label>
+                <input type="text" id="admin-student-filter" placeholder="Reg No or Name...">
+              </div>
+
+              <button id="apply-admin-filters" class="btn btn-primary full-width" type="button">Apply Filters</button>
+            </div>
+
+            <!-- Overall Data Table -->
+            <div id="admin-report-container" class="export-container">
+              <div id="admin-report-printable" style="padding: 10px; margin-top: 15px;">
+                <div class="letterhead-print">
+                  <div class="lp-college">AVS Engineering College (Autonomous)</div>
+                  <div class="lp-sub">Discipline Monitoring System — Admin Summary</div>
+                </div>
+                <h3>Discipline Records Dashboard</h3>
+                <div class="table-wrapper">
+                  <table id="admin-report-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Faculty</th>
+                        <th>Student</th>
+                        <th>Reg No</th>
+                        <th>Dept</th>
+                        <th>Year</th>
+                        <th>Section</th>
+                        <th>Violation</th>
+                        <th>Block</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="export-actions">
+                <button id="admin-export-pdf" class="btn btn-danger" type="button">PDF</button>
+                <button id="admin-export-excel" class="btn btn-success" type="button">Excel</button>
+                <button id="admin-export-image" class="btn btn-info" type="button">Image</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Tab 2: Manage Students -->
+      <div id="admin-students-tab" class="tab-content">
+        <div class="card animate-slide-up">
+          <div class="card-header">
+            <h2>Manage Student Records</h2>
+            <span class="card-eyebrow">Bulk Import</span>
+          </div>
+          <div class="card-body">
+            <p class="import-instructions">
+              Upload a CSV or Excel file with columns named exactly
+              <code>name, regNo, department, year, section</code>.
+              Department must be one of AI&amp;DS, BME, CIVIL, CSE, CSE(AI&amp;ML), ECE, EEE, IT, MECH, MBA, MCA. Year
+              must be I, II, III, or IV.
+              Uploading again with the same Reg No updates that student instead of duplicating them.
+            </p>
+
+            <button type="button" id="download-student-template" class="btn btn-secondary full-width">
+              <i class="ph ph-download-simple"></i> Download CSV Template
+            </button>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label for="student-file-input">CSV / Excel File</label>
+              <input type="file" id="student-file-input" accept=".csv,.xlsx,.xls">
+            </div>
+
+            <button id="import-students-btn" class="btn btn-primary full-width" type="button" disabled>Import
+              Students</button>
+            <p id="import-status" class="empty-note hidden"></p>
+
+            <div class="card-inner">
+              <div class="ticket-label" style="margin-bottom:10px;">Students On Record — By Department</div>
+              <div id="student-dept-counts" class="faculty-summary-list">
+                <p class="empty-note">No data yet — using sample demo students until you import a file.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Tab 3: Manage Faculty -->
+      <div id="admin-faculty-tab" class="tab-content">
+        <div class="card animate-slide-up">
+          <div class="card-header">
+            <h2>Manage Faculty Records</h2>
+            <span class="card-eyebrow">Bulk Import</span>
+          </div>
+          <div class="card-body">
+            <p class="import-instructions">
+              Upload a CSV or Excel file with columns named exactly
+              <code>name, department, email</code> (email is optional).
+              Department must be one of AI&amp;DS, BME, CIVIL, CSE, CSE(AI&amp;ML), ECE, EEE, IT, MECH, MBA, MCA.
+              Any faculty on this roster can log an incident for a student from <strong>any</strong> department —
+              department here is for reference and reporting only, not a restriction.
+              Re-uploading the same faculty updates their record instead of duplicating them.
+            </p>
+
+            <button type="button" id="download-faculty-template" class="btn btn-secondary full-width">
+              <i class="ph ph-download-simple"></i> Download CSV Template
+            </button>
+
+            <div class="form-group" style="margin-top:16px;">
+              <label for="faculty-file-input">CSV / Excel File</label>
+              <input type="file" id="faculty-file-input" accept=".csv,.xlsx,.xls">
+            </div>
+
+            <button id="import-faculty-btn" class="btn btn-primary full-width" type="button" disabled>Import
+              Faculty</button>
+            <p id="import-faculty-status" class="empty-note hidden"></p>
+
+            <div class="card-inner">
+              <div class="ticket-label" style="margin-bottom:10px;">Faculty On Record — By Department</div>
+              <div id="faculty-dept-counts" class="faculty-summary-list">
+                <p class="empty-note">No data yet — using sample demo faculty until you import a file.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>AVS Engineering College (Autonomous) — Discipline Monitoring System</p>
+    <p>Developed by <strong>Mr. P. Vallarasu</strong>, AP/AI&amp;DS</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
